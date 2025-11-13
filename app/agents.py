@@ -1,13 +1,15 @@
 from typing import TYPE_CHECKING, Generic
+import sqlite3
 
 from langchain.agents import create_agent
 from langchain.agents.middleware.types import ResponseT
 from langchain.chat_models import init_chat_model
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.typing import ContextT
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 from .middleware import LoggingMiddleware
 from .state import AgentSessionState
+from .config import get_settings
 
 if TYPE_CHECKING:
     from langchain.agents.middleware.types import _InputAgentState, _OutputAgentState
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
 
 class AgentSession(Generic[ResponseT, ContextT]):
     agent: "CompiledStateGraph[AgentSessionState[ResponseT], ContextT, _InputAgentState, _OutputAgentState[ResponseT]]"
+    settings = get_settings()
 
     def __init__(
         self,
@@ -33,5 +36,5 @@ class AgentSession(Generic[ResponseT, ContextT]):
             system_prompt=system_prompt,
             middleware=[LoggingMiddleware()],
             state_schema=AgentSessionState,
-            checkpointer=InMemorySaver(),
+            checkpointer=SqliteSaver(sqlite3.connect(self.settings.CHECKPOINT_STORAGE_PATH)),
         )
