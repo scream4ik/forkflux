@@ -1,0 +1,2 @@
+class ManualOrchestratorException(Exception):
+    pass

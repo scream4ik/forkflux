@@ -1,39 +1,119 @@
-from .orchestrator import ManualOrchestrator
+import uuid
+
+import streamlit as st
+
+from app.constants import LLM_AVAILABLE_MODELS, Agent
+from app.exceptions import ManualOrchestratorException
+from app.orchestrator import ManualOrchestrator
 
 
-task = "Develop a Go-To-Market strategy for an AI startup that is creating a plugin for Figma."
-orchestrator = ManualOrchestrator(main_task=task)
-orchestrator.add_agent(
-    name="generator",
-    system_prompt="You are a creative marketer, your task is to generate ideas and create draft documents.",
-    model="gpt-4o-mini",
-)
-orchestrator.add_agent(
-    name="critic",
-    system_prompt="You are a pragmatic business analyst. Your task is to critically evaluate ideas, identify risks, and propose concrete, measurable steps.",
-    model="gpt-4.1-mini",
-)
+@st.cache_resource
+def get_orchestrator():
+    return ManualOrchestrator()
 
-prompt_for_generator = "Create the first draft of a GTM strategy. Outline the key acquisition channels."
-generator_response_1 = orchestrator.talk_to(
-    agent_name="generator", input_text=prompt_for_generator, thread_id="generator"
-)
-print(generator_response_1)
 
-prompt_for_critic = "Analyze this strategy. Which channels are the riskiest and why? Suggest alternatives."
-critic_response_1 = orchestrator.talk_to(
-    agent_name="critic", input_text=prompt_for_critic, thread_id="critic", context_from="generator"
-)
-print(critic_response_1)
+def initialize_session_state() -> None:
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "agents" not in st.session_state:
+        st.session_state.agents = {
+            Agent.GENERATOR: {"thread_id": str(uuid.uuid4())},
+            Agent.CRITIC: {"thread_id": str(uuid.uuid4())},
+        }
+    if "is_main_task_set" not in st.session_state:
+        st.session_state.is_main_task_set = False
+    if "main_task_submitted" not in st.session_state:
+        st.session_state.main_task_submitted = False
+    if "current_agent" not in st.session_state:
+        st.session_state.current_agent = Agent.GENERATOR
 
-prompt_for_generator_2 = "Great observations. Please rewrite the channels section taking this feedback into account."
-generator_response_2 = orchestrator.talk_to(
-    agent_name="generator", input_text=prompt_for_generator_2, thread_id="generator", context_from="critic"
-)
-print(generator_response_2)
 
-prompt_for_generator_3 = "Okay, now add a section on the budget."
-generator_response_3 = orchestrator.talk_to(
-    agent_name="generator", input_text=prompt_for_generator_3, thread_id="generator"
-)
-print(generator_response_3)
+initialize_session_state()
+orchestrator = get_orchestrator()
+
+
+def redirect_response() -> None:
+    if not st.session_state.messages:
+        return
+
+    last_message = st.session_state.messages[-1]
+    last_agent_role = last_message["role"]
+    last_content = last_message["content"]
+    next_agent = Agent.CRITIC if last_agent_role == Agent.GENERATOR else Agent.GENERATOR
+
+    try:
+        thread_id = st.session_state.agents[next_agent]["thread_id"]
+        response = orchestrator.talk_to(
+            agent_name=next_agent, input_text=last_content, thread_id=thread_id, context_from=last_agent_role
+        )
+        st.session_state.messages.append({"role": next_agent, "content": response})
+        st.session_state.current_agent = next_agent
+    except ManualOrchestratorException as e:
+        st.session_state.messages.append({"role": "assistant", "content": f"Error from {next_agent.value}: {str(e)}"})
+
+
+with st.sidebar:
+    st.title("Configuration")
+    agent_generator = st.selectbox(
+        "Choose the Generator model",
+        LLM_AVAILABLE_MODELS,
+        disabled=st.session_state.main_task_submitted,
+        help="You can only choose the model before starting the chat.",
+    )
+    agent_critic = st.selectbox(
+        "Choose the Critic model",
+        LLM_AVAILABLE_MODELS,
+        disabled=st.session_state.main_task_submitted,
+        help="You can only choose the model before starting the chat.",
+    )
+    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
+
+st.title("💬 Chatbot")
+st.caption("🚀 A Streamlit chatbot powered by OpenAI")
+
+for msg in st.session_state.messages:
+    role_str = msg["role"].value if isinstance(msg["role"], Agent) else msg["role"]
+    with st.chat_message(role_str):
+        st.markdown(msg["content"])
+
+if st.session_state.messages:
+    last_message_role = st.session_state.messages[-1]["role"]
+    if last_message_role in [Agent.GENERATOR, Agent.CRITIC]:
+        next_agent_display = "Critic" if last_message_role == Agent.GENERATOR else "Generator"
+        st.button(f"Redirect response to {next_agent_display}", on_click=redirect_response)
+
+if prompt := st.chat_input("What is the main task?"):
+    if not openai_api_key:
+        st.info("Please add your OpenAI API key to continue.")
+        st.stop()
+
+    st.session_state.main_task_submitted = True
+
+    if not st.session_state.is_main_task_set:
+        orchestrator.set_llm_api_key(openai_api_key)
+        orchestrator.set_main_task(prompt)
+        orchestrator.add_agent(
+            name=Agent.GENERATOR,
+            system_prompt="You are a creative marketer, your task is to generate ideas and create draft documents.",
+            model=agent_generator,
+        )
+        orchestrator.add_agent(
+            name=Agent.CRITIC,
+            system_prompt="You are a pragmatic business analyst. Your task is to critically evaluate ideas, identify risks, and propose concrete, measurable steps.",
+            model=agent_critic,
+        )
+        st.session_state.is_main_task_set = True
+
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+    try:
+        thread_id = st.session_state.agents[st.session_state.current_agent]["thread_id"]
+        response = orchestrator.talk_to(
+            agent_name=st.session_state.current_agent, input_text=prompt, thread_id=thread_id
+        )
+        st.session_state.messages.append({"role": st.session_state.current_agent, "content": response})
+    except ManualOrchestratorException as e:
+        st.session_state.messages.append({"role": "assistant", "content": str(e)})
+
+    st.rerun()
