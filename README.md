@@ -6,6 +6,12 @@ An AI system where one LLM generates ideas and another LLM critiques them. You a
 
 This project is a complete example of how to build a reliable and smart multi-agent system where a user can manage the workflow. It includes a strong testing setup using DeepEval to ensure the AI agents behave as expected.
 
+## Demo
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/scream4ik/forkflux/main/assets/docs/demo.gif" width="100%" />
+</p>
+
 ## 🚀 Key Features
 
 *   **Generator-Critic Team:** One AI agent has the role of a "Generator" to create ideas, code, or text. Another AI agent acts as a "Critic" to review the work, find problems, and suggest improvements.
