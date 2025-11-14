@@ -36,5 +36,5 @@ class AgentSession(Generic[ResponseT, ContextT]):
             system_prompt=system_prompt,
             middleware=[LoggingMiddleware()],
             state_schema=AgentSessionState,
-            checkpointer=SqliteSaver(sqlite3.connect(self.settings.CHECKPOINT_STORAGE_PATH)),
+            checkpointer=SqliteSaver(sqlite3.connect(self.settings.CHECKPOINT_STORAGE_PATH, check_same_thread=False)),
         )
