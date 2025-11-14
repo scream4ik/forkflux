@@ -70,8 +70,9 @@ with st.sidebar:
     openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
 
-st.title("💬 Chatbot")
-st.caption("🚀 A Streamlit chatbot powered by OpenAI")
+st.set_page_config(page_title="Agentic-Critic System", page_icon="🤖")
+st.title("💬 Agentic-Critic: Your AI-team")
+st.caption("🚀 Iteratively improving ideas with collaborating AI agents")
 
 for msg in st.session_state.messages:
     role_str = msg["role"].value if isinstance(msg["role"], Agent) else msg["role"]
