@@ -6,6 +6,7 @@ from openai import AuthenticationError
 
 from .agents import AgentSession
 from .exceptions import ManualOrchestratorException
+from .prompts import CONTEXT_WRAPPER_PROMPT
 from .state import AgentSessionState
 
 if TYPE_CHECKING:
@@ -18,7 +19,6 @@ if TYPE_CHECKING:
 class ManualOrchestrator:
     main_task: str | None = None
     agents: dict[str, AgentSession[AIMessage, Optional["BaseModel"]]] = {}
-    last_outputs: dict[str, str] = {}
     llm_api_key: str | None = None
 
     def set_llm_api_key(self, api_key: str) -> None:
@@ -39,19 +39,8 @@ class ManualOrchestrator:
             raise ManualOrchestratorException("Main task not set")
 
         talk_to_input = None
-        if context_from is not None and context_from in self.last_outputs:
-            context_text = self.last_outputs[context_from]
-
-            talk_to_input = f"""
-            --- The context from the agent '{context_from}' ---
-            {context_text}
-            ------------------------------------
-
-            YOUR TASK:
-            {input_text}
-
-            Don't forget about the main goal: {self.main_task}
-            """
+        if context_from is not None:
+            talk_to_input = CONTEXT_WRAPPER_PROMPT.format(main_task=self.main_task, context_text=input_text)
 
         messages: Sequence[HumanMessage] = [HumanMessage(content=talk_to_input or input_text)]
         config: "RunnableConfig" = {"configurable": {"thread_id": thread_id}}
@@ -65,5 +54,4 @@ class ManualOrchestrator:
             raise ManualOrchestratorException("API key is invalid")
 
         response_content = response["messages"][-1].content
-        self.last_outputs[agent_name] = response_content
         return response_content

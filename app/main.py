@@ -5,6 +5,7 @@ import streamlit as st
 from app.constants import LLM_AVAILABLE_MODELS, Agent
 from app.exceptions import ManualOrchestratorException
 from app.orchestrator import ManualOrchestrator
+from app.prompts import CRITIC_SYSTEM_PROMPT, GENERATOR_SYSTEM_PROMPT
 
 
 @st.cache_resource
@@ -95,12 +96,12 @@ if prompt := st.chat_input("What is the main task?"):
         orchestrator.set_main_task(prompt)
         orchestrator.add_agent(
             name=Agent.GENERATOR,
-            system_prompt="You are a creative marketer, your task is to generate ideas and create draft documents.",
+            system_prompt=GENERATOR_SYSTEM_PROMPT,
             model=agent_generator,
         )
         orchestrator.add_agent(
             name=Agent.CRITIC,
-            system_prompt="You are a pragmatic business analyst. Your task is to critically evaluate ideas, identify risks, and propose concrete, measurable steps.",
+            system_prompt=CRITIC_SYSTEM_PROMPT,
             model=agent_critic,
         )
         st.session_state.is_main_task_set = True

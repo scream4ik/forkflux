@@ -3,3 +3,6 @@ linters:
 
 ui:
 	@python -m streamlit run app/main.py
+
+test:
+	@deepeval test run tests/ -c
