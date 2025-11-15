@@ -5,4 +5,4 @@ ui:
 	@python -m streamlit run app/main.py
 
 test:
-	@deepeval test run tests/ -c
+	@deepeval test run tests/ai/ -c
