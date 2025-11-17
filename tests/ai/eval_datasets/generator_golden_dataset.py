@@ -9,7 +9,7 @@ generator_golden_dataset = [
         "description": "Check: Format - Did it generate exactly three slogans? Creativity - How original and memorable are they? Relevance - Do the slogans reflect the essence of your product (criticism, AI collaboration)?",
         "input": """
         I need you to brainstorm three short and catchy marketing slogans for my new AI startup.
-        The startup is named 'Agentic-Critic'.
+        The startup is named 'ForkFlux'.
         Its key feature is a multi-agent system where one AI (a 'Generator') creates content, and another AI (a 'Critic') reviews it. The main benefit for the user is that this collaboration leads to much better, more refined ideas through an iterative process.
         The slogans should highlight this unique process of AI-powered collaboration, critique, and improvement.
         """,

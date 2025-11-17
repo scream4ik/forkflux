@@ -5,7 +5,7 @@ import streamlit as st
 from app.constants import LLM_AVAILABLE_MODELS, Agent
 from app.exceptions import ManualOrchestratorException
 from app.orchestrator import ManualOrchestrator
-from app.prompts import CRITIC_SYSTEM_PROMPT, GENERATOR_SYSTEM_PROMPT
+from app.prompts import BRUTALLY_HONEST_PROMPT, CRITIC_SYSTEM_PROMPT, GENERATOR_SYSTEM_PROMPT, combine_prompts
 
 
 @st.cache_resource
@@ -67,11 +67,16 @@ with st.sidebar:
         disabled=st.session_state.main_task_submitted,
         help="You can only choose the model before starting the chat.",
     )
+    brutally_honest_mode = st.toggle(
+        "Hardcore Mode",
+        disabled=st.session_state.main_task_submitted,
+        help="The AI will provide direct, unfiltered, and challenging feedback instead of being agreeable.",
+    )
     openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
 
-st.set_page_config(page_title="Agentic-Critic System", page_icon="🤖")
-st.title("💬 Agentic-Critic: Your AI-team")
+st.set_page_config(page_title="ForkFlux: AI Collaboration System", page_icon="🤖")
+st.title("💬 ForkFlux")
 st.caption("🚀 Iteratively improving ideas with collaborating AI agents")
 
 for msg in st.session_state.messages:
@@ -93,16 +98,21 @@ if prompt := st.chat_input("What is the main task?"):
     st.session_state.main_task_submitted = True
 
     if not st.session_state.is_main_task_set:
+        style_prompt = BRUTALLY_HONEST_PROMPT if brutally_honest_mode else None
+
+        final_generator_prompt = combine_prompts(base_prompt=GENERATOR_SYSTEM_PROMPT, style_prompt=style_prompt)
+        final_critic_prompt = combine_prompts(base_prompt=CRITIC_SYSTEM_PROMPT, style_prompt=style_prompt)
+
         orchestrator.set_llm_api_key(openai_api_key)
         orchestrator.set_main_task(prompt)
         orchestrator.add_agent(
             name=Agent.GENERATOR,
-            system_prompt=GENERATOR_SYSTEM_PROMPT,
+            system_prompt=final_generator_prompt,
             model=agent_generator,
         )
         orchestrator.add_agent(
             name=Agent.CRITIC,
-            system_prompt=CRITIC_SYSTEM_PROMPT,
+            system_prompt=final_critic_prompt,
             model=agent_critic,
         )
         st.session_state.is_main_task_set = True

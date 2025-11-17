@@ -1,4 +1,4 @@
-# Agentic-Critic: A Multi-Agent AI System
+# ForkFlux: A Multi-Agent AI System
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -26,7 +26,7 @@ The system is managed by a central **Orchestrator**. When you send a message, th
 
 ```mermaid
 graph LR
-    subgraph "Agentic-Critic System"
+    subgraph "ForkFlux: AI Collaboration System"
         U[👨‍💻 User] --> O{Orchestrator}
 
         subgraph "Generator Agent"
