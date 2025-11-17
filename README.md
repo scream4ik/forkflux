@@ -122,9 +122,10 @@ $env:OPENAI_API_KEY="sk-..."
 ```
 
 ### 3. Run the Tests
-Now you can run all the tests with `deepeval`.
+Now you can run all the tests with `deepeval` and `pytest`.
 ```bash
-deepeval test run tests/ -c
+deepeval test run tests/ai/ -c
+python -m pytest -s tests/app
 ```
 The first time you run the tests, it will be slow because it calls the real AI models. After that, the tests will be very fast because the results are cached.
 
@@ -138,6 +139,10 @@ The first time you run the tests, it will be slow because it calls the real AI m
 ## 📄 License
 
 Licensed under the [Apache 2.0 License](LICENSE).
+
+## 🤝 Contributing
+
+Issues and PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ## ⭐️ Like the idea?
 
