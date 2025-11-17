@@ -5,6 +5,7 @@ from langchain_core.exceptions import LangChainException
 from openai import AuthenticationError
 
 from .agents import AgentSession
+from .constants import LLMModel
 from .exceptions import ManualOrchestratorException
 from .prompts import CONTEXT_WRAPPER_PROMPT
 from .state import AgentSessionState
@@ -12,8 +13,6 @@ from .state import AgentSessionState
 if TYPE_CHECKING:
     from langchain_core.runnables import RunnableConfig
     from pydantic import BaseModel
-
-    from .constants import LLMModel
 
 
 class ManualOrchestrator:
@@ -27,10 +26,12 @@ class ManualOrchestrator:
     def set_main_task(self, main_task: str) -> None:
         self.main_task = main_task
 
-    def add_agent(self, name: str, system_prompt: str, model: "LLMModel") -> None:
+    def add_agent(self, name: str, system_prompt: str, model: LLMModel) -> None:
         if self.llm_api_key is None:
             raise ManualOrchestratorException("API key is not set")
-        self.agents[name] = AgentSession(api_key=self.llm_api_key, system_prompt=system_prompt, model=model)
+        self.agents[name] = AgentSession(
+            api_key=self.llm_api_key, system_prompt=system_prompt, model=model, summary_model=LLMModel.GPT_4O_MINI
+        )
 
     def talk_to(self, agent_name: str, input_text: str, thread_id: str, context_from: str | None = None) -> str:
         if agent_name not in self.agents:

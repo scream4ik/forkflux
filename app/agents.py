@@ -2,6 +2,7 @@ import sqlite3
 from typing import TYPE_CHECKING, Generic
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import SummarizationMiddleware
 from langchain.agents.middleware.types import ResponseT
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.sqlite import SqliteSaver
@@ -27,14 +28,19 @@ class AgentSession(Generic[ResponseT, ContextT]):
         api_key: str,
         system_prompt: str,
         model: "LLMModel",
+        summary_model: "LLMModel",
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> None:
         llm = init_chat_model(model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key)
+        summary_llm = init_chat_model(model=summary_model, api_key=api_key)
         self.agent = create_agent(  # type: ignore[assignment]
             llm,
             system_prompt=system_prompt,
-            middleware=[LoggingMiddleware()],
+            middleware=[
+                LoggingMiddleware(),  # type: ignore[list-item]
+                SummarizationMiddleware(model=summary_llm, max_tokens_before_summary=4000, messages_to_keep=20),  # type: ignore[list-item]
+            ],
             state_schema=AgentSessionState,
             checkpointer=SqliteSaver(sqlite3.connect(self.settings.CHECKPOINT_STORAGE_PATH, check_same_thread=False)),
         )
