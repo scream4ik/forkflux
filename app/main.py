@@ -72,8 +72,19 @@ with st.sidebar:
         disabled=st.session_state.main_task_submitted,
         help="The AI will provide direct, unfiltered, and challenging feedback instead of being agreeable.",
     )
-    openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
+
+    needs_openai_key = agent_generator.startswith("gpt") or agent_critic.startswith("gpt")
+    needs_google_key = agent_generator.startswith("gemini") or agent_critic.startswith("gemini")
+
+    openai_api_key = None
+    if needs_openai_key:
+        openai_api_key = st.text_input("OpenAI API Key", key="openai_api_key", type="password")
+        "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
+
+    google_api_key = None
+    if needs_google_key:
+        google_api_key = st.text_input("Google API Key", key="google_api_key", type="password")
+        "[Get a Google API key](https://ai.google.dev/)"
 
 st.set_page_config(page_title="ForkFlux: AI Collaboration System", page_icon="🤖")
 st.title("💬 ForkFlux")
@@ -91,8 +102,8 @@ if st.session_state.messages:
         st.button(f"Redirect response to {next_agent_display}", on_click=redirect_response)
 
 if prompt := st.chat_input("What is the main task?"):
-    if not openai_api_key:
-        st.info("Please add your OpenAI API key to continue.")
+    if (needs_openai_key and not openai_api_key) or (needs_google_key and not google_api_key):
+        st.info("Please add all required API keys in the sidebar to continue.")
         st.stop()
 
     st.session_state.main_task_submitted = True
@@ -103,7 +114,7 @@ if prompt := st.chat_input("What is the main task?"):
         final_generator_prompt = combine_prompts(base_prompt=GENERATOR_SYSTEM_PROMPT, style_prompt=style_prompt)
         final_critic_prompt = combine_prompts(base_prompt=CRITIC_SYSTEM_PROMPT, style_prompt=style_prompt)
 
-        orchestrator.set_llm_api_key(openai_api_key)
+        orchestrator.set_llm_api_keys(openai_key=openai_api_key, google_key=google_api_key)
         orchestrator.set_main_task(prompt)
         orchestrator.add_agent(
             name=Agent.GENERATOR,

@@ -32,8 +32,12 @@ class AgentSession(Generic[ResponseT, ContextT]):
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> None:
-        llm = init_chat_model(model=model, temperature=temperature, max_tokens=max_tokens, api_key=api_key)
-        summary_llm = init_chat_model(model=summary_model, api_key=api_key)
+        model_provider = "google_genai" if model.startswith("gemini") else "openai"
+
+        llm = init_chat_model(
+            model=model, model_provider=model_provider, temperature=temperature, max_tokens=max_tokens, api_key=api_key
+        )
+        summary_llm = init_chat_model(model=summary_model, model_provider=model_provider, api_key=api_key)
         self.agent = create_agent(  # type: ignore[assignment]
             llm,
             system_prompt=system_prompt,

@@ -38,8 +38,8 @@ def test_agent_session_initialization(mocker):
 
     assert mock_init_chat_model.call_count == 2
     expected_calls = [
-        call(model=LLMModel.GPT_4_1, temperature=0.5, max_tokens=100, api_key="test_api_key"),
-        call(model=LLMModel.GPT_4O_MINI, api_key="test_api_key"),
+        call(model=LLMModel.GPT_4_1, model_provider="openai", temperature=0.5, max_tokens=100, api_key="test_api_key"),
+        call(model=LLMModel.GPT_4O_MINI, model_provider="openai", api_key="test_api_key"),
     ]
     mock_init_chat_model.assert_has_calls(expected_calls, any_order=False)
 

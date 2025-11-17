@@ -10,7 +10,7 @@ def test_add_agent_raises_error_if_api_key_is_not_set(mocker):
     orchestrator = ManualOrchestrator()
     orchestrator.llm_api_key = None
 
-    with pytest.raises(ManualOrchestratorException, match="API key is not set"):
+    with pytest.raises(ManualOrchestratorException, match="API key for model 'LLMModel.GPT_4_1' is not set."):
         orchestrator.add_agent(name=Agent.GENERATOR, system_prompt="Test prompt", model=LLMModel.GPT_4_1)
 
 
