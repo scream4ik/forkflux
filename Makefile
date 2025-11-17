@@ -4,5 +4,8 @@ linters:
 ui:
 	@python -m streamlit run app/main.py
 
-test:
+test-ai:
 	@deepeval test run tests/ai/ -c
+
+test-app:
+	@python -m pytest -s tests/app
