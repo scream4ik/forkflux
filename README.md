@@ -30,12 +30,12 @@ graph LR
         U[👨‍💻 User] --> O{Orchestrator}
 
         subgraph "Generator Agent"
-            A1_LLM[🧠 LLM: OpenAI GPT-4.1]
+            A1_LLM[🧠 LLM: OpenAI GPT-5.1]
             A1_Mem[📝 Separate Memory]
         end
 
         subgraph "Critic Agent"
-            A2_LLM[🧠 LLM: OpenAI GPT-5]
+            A2_LLM[🧠 LLM: Gemini 2.5 Pro]
             A2_Mem[📝 Separate Memory]
         end
 
@@ -131,7 +131,7 @@ The first time you run the tests, it will be slow because it calls the real AI m
 
 ## 📈 Future Plans
 
--   [ ] **Add more agent roles:** like a "Tester" to check code, or an "Editor" to improve grammar.
+-   [ ] **Conversation History** See a list of their past conversations. Load an old conversation and continue working on it.
 -   [ ] **Give agents tools:** Allow agents to use tools like a web search to find up-to-date information.
 -   [ ] **Improve the UI:** Make the user interface more advanced.
 -   [ ] **Automate workflows:** Use a tool like LangGraph to create automatic sequences for common tasks.
