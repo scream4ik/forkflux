@@ -7,6 +7,7 @@ from langchain.agents.middleware.types import ResponseT
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.typing import ContextT
+from pydantic import BaseModel, Field
 
 from .config import get_settings
 from .middleware import LoggingMiddleware
@@ -17,6 +18,34 @@ if TYPE_CHECKING:
     from langgraph.graph.state import CompiledStateGraph
 
     from .constants import LLMModel
+
+
+class RefinementFeedback(BaseModel):
+    critical_flaws: list[str] = Field(
+        ...,
+        description=(
+            "A list of specific logical inconsistencies, factual errors, or security risks found in the input. "
+            "Focus ONLY on objective failures. Do not include subjective style choices or nitpicks. "
+            "If there are no critical errors, return an empty list."
+        ),
+    )
+
+    suggestions: list[str] = Field(
+        ...,
+        description=(
+            "A list of blunt, actionable steps. "
+            "If the idea is viable: list technical/strategic improvements. "
+            "If the idea is dead/flawed: The FIRST item MUST be 'KILL THIS IDEA' or 'ABANDON PROJECT'. "
+            "Do not offer 'research' or 'minor fixes' for dead ideas."
+        ),
+    )
+
+    chat_response: str = Field(
+        ...,
+        description=(
+            "A professional, concise summary of the critique addressed to the human user. " "Do not output raw JSON."
+        ),
+    )
 
 
 class AgentSession(Generic[ResponseT, ContextT]):
@@ -31,6 +60,7 @@ class AgentSession(Generic[ResponseT, ContextT]):
         summary_model: "LLMModel",
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        response_format: type[BaseModel] | None = None,
     ) -> None:
         model_provider = "google_genai" if model.startswith("gemini") else "openai"
 
@@ -47,4 +77,5 @@ class AgentSession(Generic[ResponseT, ContextT]):
             ],
             state_schema=AgentSessionState,
             checkpointer=SqliteSaver(sqlite3.connect(self.settings.CHECKPOINT_STORAGE_PATH, check_same_thread=False)),
+            response_format=response_format,  # type: ignore[arg-type]
         )

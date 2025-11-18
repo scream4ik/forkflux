@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock, call
 
-from app.agents import AgentSession
+from app.agents import AgentSession, RefinementFeedback
 from app.constants import LLMModel
 
 
-def test_agent_session_initialization(mocker):
+def test_agent_session_initialization_default(mocker):
     mock_llm = MagicMock()
     mock_summary_llm = MagicMock()
     mock_init_chat_model = mocker.patch("app.agents.init_chat_model", side_effect=[mock_llm, mock_summary_llm])
@@ -57,5 +57,27 @@ def test_agent_session_initialization(mocker):
     assert call_kwargs["system_prompt"] == "Test Prompt"
     assert call_kwargs["checkpointer"] == mock_saver_instance
     assert call_kwargs["middleware"] == [mock_logging_middleware_instance, mock_summarization_middleware_instance]
+    assert call_kwargs["response_format"] is None
 
     assert session.agent == mock_compiled_agent
+
+
+def test_agent_session_initialization_with_structured_output(mocker):
+    mock_llm = MagicMock()
+    mocker.patch("app.agents.init_chat_model", side_effect=[mock_llm, MagicMock()])
+    mocker.patch("app.agents.LoggingMiddleware")
+    mocker.patch("app.agents.SummarizationMiddleware")
+    mocker.patch("app.agents.sqlite3.connect")
+    mocker.patch("app.agents.SqliteSaver")
+    mock_create_agent = mocker.patch("app.agents.create_agent")
+
+    AgentSession(
+        api_key="test_key",
+        system_prompt="Critic Prompt",
+        model=LLMModel.GPT_4_1,
+        summary_model=LLMModel.GPT_4O_MINI,
+        response_format=RefinementFeedback,
+    )
+
+    _, call_kwargs = mock_create_agent.call_args
+    assert call_kwargs["response_format"] == RefinementFeedback

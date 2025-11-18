@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
+from app.agents import RefinementFeedback
 from app.prompts import CRITIC_SYSTEM_PROMPT, GENERATOR_SYSTEM_PROMPT
 
 
@@ -22,7 +23,7 @@ def set_llm_cache_for_session():
 def critic_chain():
     llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0.7)
     prompt_template = ChatPromptTemplate.from_messages([("system", CRITIC_SYSTEM_PROMPT), ("human", "{input_text}")])
-    return prompt_template | llm | StrOutputParser()
+    return prompt_template | llm.with_structured_output(RefinementFeedback)
 
 
 @pytest.fixture(scope="session")

@@ -3,6 +3,19 @@ from deepeval.test_case import LLMTestCaseParams
 
 from app.prompts import CONTEXT_WRAPPER_PROMPT
 
+MOCKED_CRITIQUE_INPUT = """
+My code:
+def add(a, b): return a - b
+
+CRITIQUE SUMMARY:
+Critical Flaws Detected:
+- The function performs subtraction instead of addition.
+- Variable names are too generic (optional).
+
+Required Fixes:
+- Change the operator from '-' to '+'.
+"""
+
 generator_golden_dataset = [
     {
         "id": "initial_creation_quality",
@@ -75,5 +88,21 @@ generator_golden_dataset = [
             "Our new app, 'TaskMaster', has three features: to-do lists, calendar integration, and team collaboration."
         ],
         "metric": HallucinationMetric(threshold=0.9),
+    },
+    {
+        "id": "feedback_handling_math_fix",
+        "description": "Checks if the Generator correctly applies specific fixes requested by the Critic format.",
+        "input": MOCKED_CRITIQUE_INPUT,
+        "metric": GEval(
+            name="Feedback Adherence",
+            criteria="The response must correct the specific code error identified in the 'CRITIQUE SUMMARY'.",
+            evaluation_steps=[
+                "1. Check if the code now uses the '+' operator.",
+                "2. Check if the function is still named 'add' (unless renamed to something better).",
+                "3. Verify the model did NOT argue with the feedback or output JSON.",
+            ],
+            evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT],
+            threshold=0.9,
+        ),
     },
 ]

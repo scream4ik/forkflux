@@ -1,7 +1,9 @@
 import uuid
+from typing import Any
 
 import streamlit as st
 
+from app.agents import RefinementFeedback
 from app.constants import LLM_AVAILABLE_MODELS, Agent
 from app.exceptions import ManualOrchestratorException
 from app.orchestrator import ManualOrchestrator
@@ -53,6 +55,36 @@ def redirect_response() -> None:
         st.session_state.messages.append({"role": "assistant", "content": f"Error from {next_agent.value}: {str(e)}"})
 
 
+def render_message(msg: dict[str, Any]) -> None:
+    role_str = msg["role"].value if isinstance(msg["role"], Agent) else msg["role"]
+    content = msg["content"]
+
+    with st.chat_message(role_str):
+        if isinstance(content, RefinementFeedback):
+            st.write(content.chat_response)
+
+            flaws = content.critical_flaws
+            suggestions = content.suggestions
+
+            if flaws:
+                with st.expander("🚨 Critical Flaws Detected", expanded=True):
+                    for flaw in flaws:
+                        st.error(f"- {flaw}")
+            else:
+                st.success("No critical flaws found!")
+
+            if suggestions:
+                with st.expander("🛠 Suggested Fixes", expanded=False):
+                    for suggestion in suggestions:
+                        st.info(f"- {suggestion}")
+
+        else:
+            if hasattr(content, "content"):
+                st.markdown(content.content)
+            else:
+                st.markdown(str(content))
+
+
 with st.sidebar:
     st.title("Configuration")
     agent_generator = st.selectbox(
@@ -91,9 +123,7 @@ st.title("💬 ForkFlux")
 st.caption("🚀 Iteratively improving ideas with collaborating AI agents")
 
 for msg in st.session_state.messages:
-    role_str = msg["role"].value if isinstance(msg["role"], Agent) else msg["role"]
-    with st.chat_message(role_str):
-        st.markdown(msg["content"])
+    render_message(msg=msg)
 
 if st.session_state.messages:
     last_message_role = st.session_state.messages[-1]["role"]
