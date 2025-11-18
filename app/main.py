@@ -106,37 +106,40 @@ if prompt := st.chat_input("What is the main task?"):
         st.info("Please add all required API keys in the sidebar to continue.")
         st.stop()
 
-    st.session_state.main_task_submitted = True
-
-    if not st.session_state.is_main_task_set:
-        style_prompt = BRUTALLY_HONEST_PROMPT if brutally_honest_mode else None
-
-        final_generator_prompt = combine_prompts(base_prompt=GENERATOR_SYSTEM_PROMPT, style_prompt=style_prompt)
-        final_critic_prompt = combine_prompts(base_prompt=CRITIC_SYSTEM_PROMPT, style_prompt=style_prompt)
-
-        orchestrator.set_llm_api_keys(openai_key=openai_api_key, google_key=google_api_key)
-        orchestrator.set_main_task(prompt)
-        orchestrator.add_agent(
-            name=Agent.GENERATOR,
-            system_prompt=final_generator_prompt,
-            model=agent_generator,
-        )
-        orchestrator.add_agent(
-            name=Agent.CRITIC,
-            system_prompt=final_critic_prompt,
-            model=agent_critic,
-        )
-        st.session_state.is_main_task_set = True
-
     st.session_state.messages.append({"role": "user", "content": prompt})
-
-    try:
-        thread_id = st.session_state.agents[st.session_state.current_agent]["thread_id"]
-        response = orchestrator.talk_to(
-            agent_name=st.session_state.current_agent, input_text=prompt, thread_id=thread_id
-        )
-        st.session_state.messages.append({"role": st.session_state.current_agent, "content": response})
-    except ManualOrchestratorException as e:
-        st.session_state.messages.append({"role": "assistant", "content": str(e)})
-
     st.rerun()
+
+if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+
+    with st.chat_message(st.session_state.current_agent.value, avatar="🤖"):
+        with st.spinner("Thinking..."):
+
+            if not st.session_state.is_main_task_set:
+                st.session_state.main_task_submitted = True
+                orchestrator.set_llm_api_keys(openai_key=openai_api_key, google_key=google_api_key)
+                orchestrator.set_main_task(st.session_state.messages[0]["content"])
+
+                style_prompt = BRUTALLY_HONEST_PROMPT if brutally_honest_mode else None
+                final_generator_prompt = combine_prompts(GENERATOR_SYSTEM_PROMPT, style_prompt)
+                final_critic_prompt = combine_prompts(CRITIC_SYSTEM_PROMPT, style_prompt)
+
+                orchestrator.add_agent(
+                    name=Agent.GENERATOR, system_prompt=final_generator_prompt, model=agent_generator
+                )
+                orchestrator.add_agent(name=Agent.CRITIC, system_prompt=final_critic_prompt, model=agent_critic)
+                st.session_state.is_main_task_set = True
+
+            try:
+                last_user_prompt = st.session_state.messages[-1]["content"]
+                thread_id = st.session_state.agents[st.session_state.current_agent]["thread_id"]
+
+                response = orchestrator.talk_to(
+                    agent_name=st.session_state.current_agent, input_text=last_user_prompt, thread_id=thread_id
+                )
+
+                st.session_state.messages.append({"role": st.session_state.current_agent, "content": response})
+
+            except ManualOrchestratorException as e:
+                st.session_state.messages.append({"role": "assistant", "content": str(e)})
+
+            st.rerun()
