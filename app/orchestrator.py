@@ -6,6 +6,7 @@ from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
 from langfuse.langchain import CallbackHandler
 from openai import AuthenticationError
 
+from .agent_tools import safe_web_search
 from .agents import AgentSession, RefinementFeedback
 from .constants import Agent, LLMModel
 from .exceptions import ManualOrchestratorException
@@ -39,7 +40,11 @@ class ManualOrchestrator:
             raise ManualOrchestratorException(f"API key for model '{model}' is not set.")
 
         summary_model_for_agent = LLMModel.GEMINI_2_5_FLASH if not is_openai_model else LLMModel.GPT_4O_MINI
-        response_fmt = RefinementFeedback if name == Agent.CRITIC else None
+        tools = []
+        response_fmt = None
+        if name == Agent.CRITIC:
+            response_fmt = RefinementFeedback
+            tools = [safe_web_search]
 
         self.agents[name] = AgentSession(
             api_key=key_to_use,
@@ -47,6 +52,7 @@ class ManualOrchestrator:
             model=model,
             summary_model=summary_model_for_agent,
             response_format=response_fmt,
+            tools=tools,
         )
 
     def talk_to(

@@ -56,6 +56,7 @@ graph LR
 *   **DeepEval:** For testing the quality of the AI's responses.
 *   **Pytest:** For running the tests.
 *   **Langfuse:** For monitor, evaluate, and debug.
+*   **Tavily:** For web search.
 
 ## ⚙️ Getting Started
 

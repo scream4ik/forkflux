@@ -1,5 +1,5 @@
 import sqlite3
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Generic, Sequence
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware
@@ -15,6 +15,7 @@ from .state import AgentSessionState
 
 if TYPE_CHECKING:
     from langchain.agents.middleware.types import _InputAgentState, _OutputAgentState
+    from langchain_core.tools import BaseTool
     from langgraph.graph.state import CompiledStateGraph
 
     from .constants import LLMModel
@@ -40,6 +41,15 @@ class RefinementFeedback(BaseModel):
         ),
     )
 
+    sources: list[str] = Field(
+        default_factory=list,
+        description=(
+            "A list of reliable sources (URLs) that support your critique. "
+            "Format them as Markdown links: '[Title](URL)'. "
+            "If you didn't use the search tool or found no sources, return an empty list."
+        ),
+    )
+
     chat_response: str = Field(
         ...,
         description=(
@@ -61,6 +71,7 @@ class AgentSession(Generic[ResponseT, ContextT]):
         temperature: float = 0.7,
         max_tokens: int | None = None,
         response_format: type[BaseModel] | None = None,
+        tools: Sequence["BaseTool"] | None = None,
     ) -> None:
         model_provider = "google_genai" if model.startswith("gemini") else "openai"
 
@@ -70,6 +81,7 @@ class AgentSession(Generic[ResponseT, ContextT]):
         summary_llm = init_chat_model(model=summary_model, model_provider=model_provider, api_key=api_key)
         self.agent = create_agent(  # type: ignore[assignment]
             llm,
+            tools=tools,
             system_prompt=system_prompt,
             middleware=[
                 LoggingMiddleware(),  # type: ignore[list-item]

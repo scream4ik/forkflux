@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import AIMessage
 
+from app.agent_tools import safe_web_search
 from app.agents import RefinementFeedback
 from app.constants import Agent, LLMModel
 from app.orchestrator import ManualOrchestrator, ManualOrchestratorException
@@ -45,6 +46,7 @@ def test_add_agent_configures_response_format_correctly(mocker):
 
     critic_call = mock_session_cls.mock_calls[1]
     assert critic_call.kwargs["response_format"] == RefinementFeedback
+    assert critic_call.kwargs["tools"] == [safe_web_search]
 
 
 def test_talk_to_returns_string_for_generator(mocker):

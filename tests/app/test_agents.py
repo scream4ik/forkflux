@@ -58,6 +58,7 @@ def test_agent_session_initialization_default(mocker):
     assert call_kwargs["checkpointer"] == mock_saver_instance
     assert call_kwargs["middleware"] == [mock_logging_middleware_instance, mock_summarization_middleware_instance]
     assert call_kwargs["response_format"] is None
+    assert call_kwargs["tools"] is None
 
     assert session.agent == mock_compiled_agent
 
@@ -81,3 +82,26 @@ def test_agent_session_initialization_with_structured_output(mocker):
 
     _, call_kwargs = mock_create_agent.call_args
     assert call_kwargs["response_format"] == RefinementFeedback
+
+
+def test_agent_session_initialization_with_tools(mocker):
+    mock_llm = MagicMock()
+    mocker.patch("app.agents.init_chat_model", side_effect=[mock_llm, MagicMock()])
+    mocker.patch("app.agents.LoggingMiddleware")
+    mocker.patch("app.agents.SummarizationMiddleware")
+    mocker.patch("app.agents.sqlite3.connect")
+    mocker.patch("app.agents.SqliteSaver")
+    mock_create_agent = mocker.patch("app.agents.create_agent")
+
+    mock_tool = MagicMock()
+
+    AgentSession(
+        api_key="test_key",
+        system_prompt="Tool User Prompt",
+        model=LLMModel.GPT_4_1,
+        summary_model=LLMModel.GPT_4O_MINI,
+        tools=[mock_tool],
+    )
+
+    _, call_kwargs = mock_create_agent.call_args
+    assert call_kwargs["tools"] == [mock_tool]

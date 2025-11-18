@@ -65,6 +65,7 @@ def render_message(msg: dict[str, Any]) -> None:
 
             flaws = content.critical_flaws
             suggestions = content.suggestions
+            sources = content.sources
 
             if flaws:
                 with st.expander("🚨 Critical Flaws Detected", expanded=True):
@@ -77,6 +78,11 @@ def render_message(msg: dict[str, Any]) -> None:
                 with st.expander("🛠 Suggested Fixes", expanded=False):
                     for suggestion in suggestions:
                         st.info(f"- {suggestion}")
+
+            if sources:
+                with st.expander("📚 Verified Sources", expanded=False):
+                    for link in sources:
+                        st.markdown(f"- {link}")
 
         else:
             if hasattr(content, "content"):
