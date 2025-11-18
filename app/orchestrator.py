@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Optional, Sequence
 from langchain.messages import AIMessage, HumanMessage
 from langchain_core.exceptions import LangChainException
 from langchain_google_genai.chat_models import ChatGoogleGenerativeAIError
+from langfuse.langchain import CallbackHandler
 from openai import AuthenticationError
 
 from .agents import AgentSession, RefinementFeedback
@@ -21,6 +22,7 @@ class ManualOrchestrator:
     agents: dict[str, AgentSession[AIMessage, Optional["BaseModel"]]] = {}
     openai_api_key: str | None = None
     google_api_key: str | None = None
+    langfuse_handler = CallbackHandler()
 
     def set_llm_api_keys(self, openai_key: str | None = None, google_key: str | None = None) -> None:
         self.openai_api_key = openai_key
@@ -69,7 +71,17 @@ class ManualOrchestrator:
             talk_to_input = CONTEXT_WRAPPER_PROMPT.format(main_task=self.main_task, context_text=clean_input_text)
 
         messages: Sequence[HumanMessage] = [HumanMessage(content=talk_to_input or clean_input_text)]
-        config: "RunnableConfig" = {"configurable": {"thread_id": thread_id}}
+
+        langfuse_metadata = {
+            "langfuse_user_id": "random-user",
+            "langfuse_session_id": thread_id,
+            "langfuse_tags": [agent_name],
+        }
+        config: "RunnableConfig" = {
+            "configurable": {"thread_id": thread_id},
+            "callbacks": [self.langfuse_handler],
+            "metadata": langfuse_metadata,
+        }
         try:
             response = self.agents[agent_name].agent.invoke(
                 input=AgentSessionState(agent_name=agent_name, messages=list(messages)), config=config  # type: ignore[arg-type]

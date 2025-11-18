@@ -55,6 +55,7 @@ graph LR
 *   **Streamlit:** To create the simple web user interface.
 *   **DeepEval:** For testing the quality of the AI's responses.
 *   **Pytest:** For running the tests.
+*   **Langfuse:** For monitor, evaluate, and debug.
 
 ## ⚙️ Getting Started
 
@@ -81,6 +82,12 @@ source .venv/bin/activate
 # Install all required libraries
 uv sync
 ```
+
+### 3. Set environment variables
+```bash
+cp .env.example .env
+```
+Check the `.env.example` file for more details.
 
 ## 🕹️ How to Use
 

@@ -23,9 +23,9 @@ def brutally_honest_generator_chain():
 def test_generator_brutally_honest_suite(test_spec: dict, brutally_honest_generator_chain):
     input_text = test_spec["input"]
     metric = test_spec["metric"]
-    context = test_spec.get("context")
+    context = test_spec.get("context", [])
 
     actual_output = brutally_honest_generator_chain.invoke({"input_text": input_text})
 
-    test_case = LLMTestCase(input=input_text, actual_output=actual_output, context=[context])
+    test_case = LLMTestCase(input=input_text, actual_output=actual_output, context=context)
     assert_test(test_case, [metric])

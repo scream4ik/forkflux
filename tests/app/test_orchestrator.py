@@ -8,6 +8,11 @@ from app.constants import Agent, LLMModel
 from app.orchestrator import ManualOrchestrator, ManualOrchestratorException
 
 
+@pytest.fixture(autouse=True)
+def mock_langfuse(mocker):
+    return mocker.patch("app.orchestrator.CallbackHandler")
+
+
 def test_add_agent_raises_error_if_api_key_is_not_set(mocker):
     orchestrator = ManualOrchestrator()
     orchestrator.llm_api_key = None
