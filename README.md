@@ -1,4 +1,4 @@
-# ForkFlux: A Multi-Agent AI System
+# AICritic: A Multi-Agent AI System
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -9,7 +9,7 @@ This project is a complete example of how to build a reliable and smart multi-ag
 ## Demo
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/scream4ik/forkflux/main/assets/docs/demo.gif" width="100%" />
+  <img src="https://raw.githubusercontent.com/scream4ik/ai-critic/main/assets/docs/demo.gif" width="100%" />
 </p>
 
 ## 🚀 Key Features
@@ -26,7 +26,7 @@ The system is managed by a central **Orchestrator**. When you send a message, th
 
 ```mermaid
 graph LR
-    subgraph "ForkFlux: AI Collaboration System"
+    subgraph "AICritic: AI Collaboration System"
         U[👨‍💻 User] --> O{Orchestrator}
 
         subgraph "Generator Agent"
@@ -65,8 +65,8 @@ Follow these steps to run the project on your own computer.
 ### 1. Clone the repository
 First, download the code to your machine.
 ```bash
-git https://github.com/scream4ik/forkflux.git
-cd forkflux
+git https://github.com/scream4ik/ai-critic.git
+cd ai-critic
 ```
 
 ### 2. Create environment and install dependencies
